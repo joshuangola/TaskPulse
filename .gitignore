@@ -21,3 +21,27 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Base .env file (in addition to your variants)
+.env
+
+# More build folders
+/dist
+
+# IDE files (if you use VS Code or IntelliJ)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Windows OS files  
+Thumbs.db
+Desktop.ini
+
+# More comprehensive logging
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Cache directories
+.eslintcache
+.npm
