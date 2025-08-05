@@ -5,6 +5,7 @@ import Controls from "./Controls";
 import TaskList from "./TaskList";
 import SessionNotification from "./SessionNotification";
 import { useAppContext } from "../App";
+import { buttonStyles } from "../utils/styleHelpers";
 
 const TimerPage = () => {
   const [workDuration, setWorkDuration] = useState(25);
@@ -157,7 +158,10 @@ const TimerPage = () => {
                     clearSessionHistory();
                   }
                 }}
-                className="w-full px-4 py-2 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                className={`w-full text-sm ${buttonStyles(
+                  "dangerGhost",
+                  "sm"
+                )}`}
               >
                 Clear Session History
               </button>
@@ -165,7 +169,7 @@ const TimerPage = () => {
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowSettings(false)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                className={buttonStyles("ghost", "sm")}
               >
                 Cancel
               </button>
@@ -173,7 +177,7 @@ const TimerPage = () => {
                 onClick={() =>
                   handleSettingsUpdate(workDuration, breakDuration)
                 }
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className={buttonStyles("settings", "sm")}
               >
                 Save
               </button>

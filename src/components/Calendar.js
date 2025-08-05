@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useAppContext } from "../App";
+import { formatDuration, isToday } from "../utils/formatTime";
+import { calendarDayStyles, cn } from "../utils/styleHelpers";
 
 const Calendar = () => {
   const { tasks, sessionHistory } = useAppContext();
@@ -26,11 +28,8 @@ const Calendar = () => {
     });
   };
 
-  const formatTime = (minutes) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-  };
+  // Use shared formatTime utility
+  const formatTime = formatDuration;
 
   // Get events for a specific date
   const getDateEvents = (date) => {
@@ -137,38 +136,31 @@ const Calendar = () => {
       {/* Calendar Days */}
       <div className="grid grid-cols-7 gap-2">
         {calendarDays.map((day, index) => {
-          const isToday = day.toDateString() === today.toDateString();
-          const isCurrentMonth = day.getMonth() === currentDate.getMonth();
           const dayEvents = getDateEvents(day);
           const hasEvents = dayEvents.length > 0;
+          const isDayToday = isToday(day);
+          const isCurrentMonth = day.getMonth() === currentDate.getMonth();
 
           return (
             <div
               key={index}
               onClick={() => handleDayClick(day)}
-              className={`group relative p-4 min-h-[100px] cursor-pointer rounded-xl transition-all duration-200 transform hover:scale-[1.02] ${
-                isCurrentMonth
-                  ? "bg-white dark:bg-gray-800 shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-700"
-                  : "bg-gray-50 dark:bg-gray-900/50 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-              } ${
-                isToday
-                  ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg"
-                  : ""
-              } ${
-                hasEvents && isCurrentMonth
-                  ? "bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/10 dark:to-purple-900/10"
-                  : ""
-              }`}
+              className={calendarDayStyles(
+                isDayToday,
+                isCurrentMonth,
+                hasEvents
+              )}
             >
               {/* Date Number */}
               <div
-                className={`text-base font-semibold mb-2 ${
-                  isToday
+                className={cn(
+                  "text-base font-semibold mb-2",
+                  isDayToday
                     ? "text-blue-600 dark:text-blue-400"
                     : isCurrentMonth
                     ? "text-gray-900 dark:text-white"
                     : "text-gray-400"
-                }`}
+                )}
               >
                 {day.getDate()}
               </div>

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { formatTimerDisplay } from "../utils/formatTime";
 
 export const useTimer = (
   initialWorkDuration = 25,
@@ -17,10 +18,18 @@ export const useTimer = (
   const [showNotification, setShowNotification] = useState(false);
   const [notificationSessionType, setNotificationSessionType] = useState(null);
 
-  // Initialize audio context
+  // Initialize audio context with proper cleanup
   useEffect(() => {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    setAudioContext(new AudioContext());
+    const audioCtx = new AudioContext();
+    setAudioContext(audioCtx);
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      if (audioCtx && audioCtx.state !== "closed") {
+        audioCtx.close().catch(console.error);
+      }
+    };
   }, []);
 
   // Reset counters if it's a new day
@@ -34,27 +43,47 @@ export const useTimer = (
     }
   }, [currentDate]);
 
-  // Play notification sound
+  // Play notification sound with error handling
   const playNotification = useCallback(() => {
-    if (audioContext) {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+    if (audioContext && audioContext.state === "running") {
+      try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
 
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          600,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          800,
+          audioContext.currentTime + 0.2
+        );
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(
-        0.01,
-        audioContext.currentTime + 0.3
-      );
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.3
+        );
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+
+        // Clean up oscillator after it finishes
+        setTimeout(() => {
+          try {
+            oscillator.disconnect();
+            gainNode.disconnect();
+          } catch (error) {
+            // Oscillator may already be cleaned up
+          }
+        }, 350);
+      } catch (error) {
+        console.warn("Audio notification failed:", error);
+      }
     }
   }, [audioContext]);
 
@@ -81,7 +110,11 @@ export const useTimer = (
     }
   }, [isWorkSession, breakDuration, workDuration, playNotification]);
 
-  // Timer effect
+  // Use ref to store the latest callback to avoid interval recreation
+  const handleSessionCompleteRef = useRef(handleSessionComplete);
+  handleSessionCompleteRef.current = handleSessionComplete;
+
+  // Optimized timer effect - reduced dependencies to prevent unnecessary recreations
   useEffect(() => {
     let interval = null;
 
@@ -89,7 +122,8 @@ export const useTimer = (
       interval = setInterval(() => {
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
-            handleSessionComplete();
+            // Use ref to get latest callback without causing effect recreation
+            handleSessionCompleteRef.current();
             return 0;
           }
           return prevTime - 1;
@@ -100,7 +134,7 @@ export const useTimer = (
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning, timeLeft, handleSessionComplete]);
+  }, [isRunning, timeLeft]); // Removed handleSessionComplete from dependencies
 
   // Timer controls
   const toggleTimer = () => {
@@ -113,14 +147,8 @@ export const useTimer = (
     setTimeLeft(workDuration * 60);
   };
 
-  // Format time as MM:SS
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
+  // Use shared formatTime utility
+  const formatTime = formatTimerDisplay;
 
   // Update settings
   const updateSettings = (newWorkDuration, newBreakDuration) => {

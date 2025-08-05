@@ -1,4 +1,10 @@
 import React from "react";
+import {
+  buttonStyles,
+  modalStyles,
+  cn,
+  conditional,
+} from "../utils/styleHelpers";
 
 const SessionNotification = ({
   isVisible,
@@ -9,27 +15,48 @@ const SessionNotification = ({
   if (!isVisible) return null;
 
   const isWorkComplete = sessionType === "work";
+  const modal = modalStyles("md");
 
   const handleConfirm = () => {
     onConfirm();
     onClose();
   };
 
+  // Clean, readable icon styles
+  const iconContainerStyle = cn(
+    "mx-auto w-16 h-16 rounded-full flex items-center justify-center",
+    conditional({
+      [isWorkComplete]: "bg-green-100 dark:bg-green-900/30",
+      [!isWorkComplete]: "bg-blue-100 dark:bg-blue-900/30",
+    })
+  );
+
+  const iconStyle = cn(
+    "w-8 h-8",
+    conditional({
+      [isWorkComplete]: "text-green-600 dark:text-green-400",
+      [!isWorkComplete]: "text-blue-600 dark:text-blue-400",
+    })
+  );
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
+    <div
+      className={modal.overlay}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notification-title"
+      onClick={onClose}
+    >
+      <div
+        className={cn(modal.content, "p-8")}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Icon */}
         <div className="text-center mb-6">
-          <div
-            className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${
-              isWorkComplete
-                ? "bg-green-100 dark:bg-green-900/30"
-                : "bg-blue-100 dark:bg-blue-900/30"
-            }`}
-          >
+          <div className={iconContainerStyle}>
             {isWorkComplete ? (
               <svg
-                className="w-8 h-8 text-green-600 dark:text-green-400"
+                className={iconStyle}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -43,7 +70,7 @@ const SessionNotification = ({
               </svg>
             ) : (
               <svg
-                className="w-8 h-8 text-blue-600 dark:text-blue-400"
+                className={iconStyle}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -60,7 +87,10 @@ const SessionNotification = ({
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-4">
+        <h3
+          id="notification-title"
+          className="text-xl font-bold text-gray-900 dark:text-white text-center mb-4"
+        >
           {isWorkComplete ? "Work Session Complete!" : "Break Time Over!"}
         </h3>
 
@@ -71,21 +101,30 @@ const SessionNotification = ({
             : "Break time is over. Ready to get back to work? Click OK to start your next work session."}
         </p>
 
-        {/* Buttons */}
-        <div className="flex space-x-3">
+        {/* Buttons - Much cleaner! */}
+        <div
+          className="flex space-x-3"
+          role="group"
+          aria-label="Session notification actions"
+        >
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+            aria-label="Dismiss notification without starting timer"
+            className={buttonStyles("ghost", "md")}
           >
             Dismiss
           </button>
           <button
             onClick={handleConfirm}
-            className={`flex-1 px-4 py-3 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+            aria-label={
               isWorkComplete
-                ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-            }`}
+                ? "Start break timer automatically"
+                : "Start work timer automatically"
+            }
+            className={buttonStyles(
+              isWorkComplete ? "success" : "primary",
+              "md"
+            )}
           >
             {isWorkComplete ? "Start Break" : "Start Work"}
           </button>
@@ -94,5 +133,7 @@ const SessionNotification = ({
     </div>
   );
 };
+
+SessionNotification.displayName = "SessionNotification";
 
 export default SessionNotification;

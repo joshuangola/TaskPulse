@@ -1,29 +1,34 @@
 import React from "react";
+import { buttonStyles } from "../utils/styleHelpers";
 
 const Controls = ({ isRunning, onToggle, onReset, onSettings }) => {
   return (
-    <div className="flex justify-center space-x-4">
+    <div
+      className="flex justify-center space-x-4"
+      role="group"
+      aria-label="Timer controls"
+    >
       <button
         onClick={onToggle}
-        className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 ${
-          isRunning
-            ? "bg-red-500 hover:bg-red-600 text-white"
-            : "bg-green-500 hover:bg-green-600 text-white"
-        }`}
+        aria-label={isRunning ? "Pause timer" : "Start timer"}
+        aria-pressed={isRunning}
+        className={buttonStyles(isRunning ? "pause" : "start", "control")}
       >
         {isRunning ? "Pause" : "Start"}
       </button>
 
       <button
         onClick={onReset}
-        className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
+        aria-label="Reset timer to initial state"
+        className={buttonStyles("reset", "control")}
       >
         Reset
       </button>
 
       <button
         onClick={onSettings}
-        className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
+        aria-label="Open timer settings"
+        className={buttonStyles("settings", "control")}
       >
         Settings
       </button>
